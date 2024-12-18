@@ -64,7 +64,7 @@ if user_message:
 
     input_data = {"message": user_message}
 
-    response = requests.post('http://backend:8000/prueba', json=input_data)
+    response = requests.post('http://backend:8000/POST/query', json=input_data)
 
     if response.status_code == 200:
         response_data = response.json()

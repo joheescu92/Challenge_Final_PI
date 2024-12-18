@@ -2,7 +2,8 @@ import chromadb
 import os
 from chromadb.config import Settings
 from fastapi import HTTPException
-from services.document_service import upload_document
+from models.metadata_document_model import Metadata_Document
+from utils.vector_database_util import add, get_retrieve_context
 
 # Configurar el directorio de persistencia
 PERSIST_DIR = "./data/chromadb"
@@ -15,14 +16,38 @@ os.makedirs(PERSIST_DIR, exist_ok=True)
 chroma_client = chromadb.Client(Settings(persist_directory=PERSIST_DIR, is_persistent=True))
 
 
-collection = chroma_client.get_or_create_collection(name="UOCRA")
+collection = chroma_client.get_or_create_collection(name="UOCRA", 
+                                                    metadata={"hnsw:space": "ip"},
+                                                    ) #calculo de distancia con producto punto
+
 
 def document_in_db(document_name: str):
 
-    cantidad_documentos = len(collection.get()["ids"]) #hay que cambiar esto validamos si esta en la db
-    if cantidad_documentos == 0:
+    results = collection.get(include=["metadatas"])
 
-        return upload_document(document_name)
-            
+    file_names = list({metadata["file"] for metadata in results["metadatas"] if "file" in metadata})
 
-    raise HTTPException(status_code=409, detail="Los documentos ya están cargados.")
+    for file in file_names:
+        if file == document_name:
+            return True
+    return False
+
+
+
+
+def add_documents(chunks,embeddings, document : Metadata_Document):
+    return add(chunks,embeddings,document,collection)
+    
+
+
+def probando_db():
+    results = collection.get(include=['documents'])
+    # Mostrar los documentos
+    
+    documents = results['documents']
+    ids  = results['ids']
+    print(len(ids))
+
+
+def get_context(query_embedding):
+    return get_retrieve_context(collection,query_embedding)
