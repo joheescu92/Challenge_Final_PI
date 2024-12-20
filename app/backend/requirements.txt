@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+chromadb
+pydantic
+cohere
+langchain
+langchain-community
+pypdf
